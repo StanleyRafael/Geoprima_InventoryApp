@@ -340,8 +340,6 @@
 
       <!-- Jual Menu with Submenu -->
       <a href="#" @click="viewJual">Jual</a>
-
-      <a href="#" @click="viewSewa">Sewa</a>
     </div>
 
     <!-- Content area -->
@@ -835,17 +833,6 @@
         </div>
         
       </div>
-
-      <!-- Sales manager target tab -->
-      <div v-if="currentView === 'Sewa'">
-        <div class="horizontal-tabs">
-          <button :class="{ active: activeTab === 'InputSewaItem' }" @click="setTab('InputSewaItem')">Input Barang Sewa</button>
-          <button :class="{ active: activeTab === 'SewaItemList' }" @click="setTab('SewaItemList')">List Barang Sewa</button>
-        </div>
-
-        <div v-if="activeTab === 'InputSewaItem'">
-      </div>
-
     </div>
   </div>
 
