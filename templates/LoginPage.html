@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enter Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-container {
+      background-color: #fff;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      width: 300px;
+    }
+    h1 {
+      margin-bottom: 20px;
+      font-size: 24px;
+      color: #333;
+    }
+    .google-login-btn {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .google-login-btn img {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+    .google-login-btn:hover {
+      background-color: #357ae8;
+    }
+    .admin-info {
+      font-size: 14px;
+      margin-top: 10px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>Aplikasi Gudang</h1>
+    
+    <!-- Google Login Button -->
+    <button class="google-login-btn" onclick="redirectToDashboard()">
+        Masuk Aplikasi
+    </button>
+
+    <!-- Admin message placeholder -->
+    <p class="admin-info">Pastikan database sudah aktif.</p>
+  </div>
+
+  <!-- JavaScript for Redirect -->
+  <script>
+    function redirectToDashboard() {
+      window.location.href = "/dashboard";
+    }
+  </script>
+</body>
+</html>

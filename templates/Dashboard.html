@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geoprima Inventory</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    /* Header bar */
+    .header-bar {
+        background-color: #444;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+    }
+    .header-bar .app-name {
+        font-size: 24px;
+        margin-left: 20px;
+    }
+    .header-bar .menu-btn {
+        background-color: #444;
+        color: white;
+        padding: 10px 20px;
+        margin-right: 20px;
+        cursor: pointer;
+        border: none;
+        outline-style: ridge;
+        outline-color: invert;
+        border-radius: 8px; /* Change this value for more or less rounding */
+    }
+    .dashboard-container {
+        display: flex;
+        height: calc(100vh - 60px); /* Adjust height to account for header */
+    }
+    .sidebar {
+        width: 200px;
+        background-color: #1e1e1e;
+        padding: 20px;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .sidebar h2 {
+        color: #fff;
+        margin-bottom: 30px;
+    }
+    .sidebar a {
+        padding: 10px 15px;
+        text-decoration: none;
+        color: white;
+        font-size: 18px;
+        margin-bottom: 10px;
+        width: 100%;
+        display: block;
+        cursor: pointer;
+    }
+    .sidebar a:focus,
+    .horizontal-tabs button:focus {
+        outline: 2px solid #fff; /* Or any color that suits your design */
+    }
+    .sidebar a:hover {
+        background-color: #575757;
+    }
+    .submenu {
+        margin-left: 20px;
+        display: none; /* Hidden by default */
+        flex-direction: column;
+    }
+    .submenu a {
+        font-size: 16px;
+    }
+    .submenu.active {
+        display: flex; /* Show the submenu when active */
+    }
+    .content {
+        flex: 1;
+        padding: 20px;
+        background-color: #f4f4f4;
+    }
+    .content h1 {
+        font-size: 24px;
+    }
+    /* Horizontal tabs */
+    .horizontal-tabs {
+        display: flex;
+        margin-bottom: 20px;
+    }
+    .horizontal-tabs button {
+        padding: 10px 15px;
+        margin-right: 10px;
+        cursor: pointer;
+        border: none;
+        background-color: #ddd;
+    }
+    .horizontal-tabs button.active {
+        background-color: #333;
+        color: white;
+    }
+    @media (max-width: 600px) {
+        .dashboard-container {
+            flex-direction: column;
+        }
+
+        .sidebar {
+            width: 100%;
+            padding: 10px;
+        }
+
+        .content {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+    }
+    .items-form {
+        display: flex;
+        flex-direction: column;
+        width: 100%; /* Set width to fill the container */
+    }
+    .items-form-container {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+    }
+    .items-form div {
+        margin-bottom: 15px;
+    }
+    .items-form label {
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+    .items-form input {
+        padding: 8px;
+        font-size: 16px;
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .items-form button {
+        padding: 10px 15px;
+        background-color: #444;
+        color: white;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+    }
+    .items-form button:hover {
+        background-color: #333;
+    }
+   /* Table Styles */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .table th, .table td {
+        padding: 12px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    /* Striped table rows */
+    .table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    .table tr:hover {
+        background-color: #f1f1f1; /* Highlight row on hover */
+    }
+    .table th {
+        background-color: #444; /* Header background color */
+        color: white; /* Header text color */
+    }
+    /* Scrollable table container */
+    .table-container {
+        max-height: 500px; /* Set the desired height for scrolling */
+        overflow-y: auto; /* Enable vertical scrolling */
+        overflow-x: hidden; /* Hide horizontal scrolling if not needed */
+        border: 1px solid #ccc; /* Optional: add border for better visibility */
+        margin-top: 10px; /* Add some margin for better layout */
+    }
+    .modal {
+      display: flex;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      width: 400px;
+      max-height: 80%; /* Prevent the modal from exceeding 80% of the screen height */
+      overflow-y: auto; /* Enable vertical scrolling if content overflows */
+    }
+
+    .modal-content p {
+      word-wrap: break-word; /* Ensure long words break */
+      overflow-wrap: break-word;
+      white-space: pre-wrap; /* Preserve whitespace and wrap */
+      text-align: justify;
+    }
+
+    .modal button {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #444;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .modal button:hover {
+      background-color: #333;
+    }
+    /* Style for the select dropdown */
+    select {
+        padding: 10px; 
+        border: 1px solid #ccc; 
+        border-radius: 5px;
+        font-size: 16px;
+        width: 100%;
+        box-sizing: border-box;
+        transition: border-color 0.3s;
+    }
+    /* Change border color on focus */
+    select:focus {
+        border-color: #444; 
+        outline: none; 
+    }
+    input, select {
+        margin-bottom: 15px;
+    }
+    .checkbox-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px; 
+        font-size: 16px; 
+    }
+    .checkbox-container label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .checkbox-container input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin: 0; 
+    }
+    [v-cloak] {
+      display: none;
+    }
+    .radio-group {
+      display: flex;
+      flex-direction: column; /* Stack elements vertically */
+      align-items: flex-start; /* Align items to the left */
+      gap: 10px; /* Add space between the label and the options */
+    }
+    .radio-group label {
+      display: flex;
+      align-items: center; /* Align radio button with text */
+      gap: 5px; /* Space between the radio button and its text */
+      margin: 0; /* Remove default margins */
+    }
+    .partial-row {
+      background-color: #ffefcc; /* Light yellow */
+      font-style: italic;
+      color: #d35400; /* Orange font */
+    }
+    .back-button {
+      top: 20px; /* 20px from the top */
+      left: 20px; /* 20px from the left */
+      background-color: transparent; /* Minimalist background */
+      color: black; /* Black text */
+      border: 1px solid black; /* Thinner border for a smaller look */
+      padding: 4px 8px; /* Reduced padding for a compact size */
+      font-size: 14px; /* Smaller font size */
+      border-radius: 3px; /* Slightly rounded corners */
+      cursor: pointer; /* Pointer cursor for interactivity */
+      transition: background-color 0.3s, color 0.3s; /* Smooth hover effect */
+    }
+    .back-button:hover {
+      background-color: black; /* Black background on hover */
+      color: white; /* White text on hover */
+    }
+    input[readonly],
+    textarea[readonly] {
+      background-color: #f5f5f5; /* Light grey background */
+      color: #a0a0a0; /* Muted text color */
+      border-color: #dcdcdc; /* Softer border color */
+      cursor: not-allowed; /* Indicates it's not editable */
+    }
+    input[disabled] {
+      background-color: transparent; /* Transparent for checkboxes/radios */
+      color: #a0a0a0; /* Muted color for text labels */
+      cursor: not-allowed;
+    }
+    input[disabled] + label {
+      color: #a0a0a0; /* Muted text color for labels */
+    }
+    input[type="number"][readonly] {
+      background-color: #f5f5f5;
+      color: #a0a0a0;
+      border-color: #dcdcdc;
+      cursor: not-allowed;
+    }
+    input[readonly]:focus,
+    textarea[readonly]:focus,
+    input[disabled]:focus {
+      outline: none; /* Remove focus outline on readonly/disabled elements */
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Header bar -->
+  <div class="header-bar">
+    <div class="app-name">MyApp Logo</div>
+  </div>
+
+  <div id="app" class="dashboard-container">
+    <!-- Sidebar (vertical tabs) -->
+    <div class="sidebar">
+      <h2>Menu</h2>
+      <a href="#" @click="viewDashboard">Beli</a>
+
+      <!-- Jual Menu with Submenu -->
+      <a href="#" @click="viewJual">Jual</a>
+
+      <a href="#" @click="viewSewa">Sewa</a>
+    </div>
+
+    <!-- Content area -->
+    <div class="content">
+      <h1 v-if="currentView">{{ currentView }}</h1>
+
+      <!-- Tab Beli -->
+      <div v-if="currentView === 'Dashboard'">
+        <div class="horizontal-tabs">
+          <button :class="{ active: activeTab === 'InputItem' }" @click="setTab('InputItem')">Input Barang Beli</button>
+          <button :class="{ active: activeTab === 'ItemList' }" @click="setTab('ItemList')">List Barang Beli </button>
+        </div>
+
+       <!-- Dashboard Submenus -->
+        <div v-if="activeTab === 'InputItem'">
+          <h1 class="pt-5 pb-2">Input Barang Beli</h1>
+
+          <div class="items-form-container">
+            <form @submit.prevent="inputItem" action="/submit-item" method="POST" class="items-form">
+              <label for="nama_barang">Nama Barang:</label>
+              <input type="text" v-model="item.nama_barang" id="nama_barang" name="nama_barang" required><br>
+
+              <label for="tanggal_masuk">Tanggal Masuk:</label>
+              <input type="date" v-model="item.tanggal_masuk" id="tanggal_masuk" name="tanggal_masuk"><br>
+
+              <label for="nomor_seri">Nomor Seri:</label>
+              <input type="text" v-model="item.nomor_seri" id="nomor_seri" name="nomor_seri" required><br>
+
+              <label for="nama_pembeli_pemasok">Nama Pembeli/Pemasok:</label>
+              <input type="text" v-model="item.nama_pembeli_pemasok" id="nama_pembeli_pemasok" name="nama_pembeli_pemasok" required><br>
+
+              <div class="checkbox-container">
+                <label>Tipe Barang:</label><br>
+                <label>
+                  <input type="checkbox" id="barang_jual" value="barang_jual" v-model="item.tipe_barang"> Barang Jual
+                </label><br>
+                <label>
+                  <input type="checkbox" id="spare_part" value="spare_part" v-model="item.tipe_barang"> Spare Part
+                </label><br>
+                <label>
+                  <input type="checkbox" id="barang_sewa" value="barang_sewa" v-model="item.tipe_barang"> Barang Sewa
+                </label><br>
+              </div>
+
+              <h3>Komponen</h3>
+              <div v-for="(component, index) in item.components" :key="index">
+                <label :for="'component-name-' + index">Nama Komponen:</label>
+                <input type="text" v-model="component.name" :id="'component-name-' + index">
+
+                <label :for="'component-quantity-' + index">Jumlah:</label>
+                <input type="number" v-model="component.quantity" :id="'component-quantity-' + index" min="1" required><br>
+
+                <!-- Sub-components section -->
+                <div v-for="(subComponent, subIndex) in component.sub_components" :key="'sub-' + index + '-' + subIndex">
+                  <label :for="'sub-component-name-' + index + '-' + subIndex">Sub-Komponen:</label>
+                  <input type="text" v-model="subComponent.name" :id="'sub-component-name-' + index + '-' + subIndex">
+
+                  <label :for="'sub-component-quantity-' + index + '-' + subIndex">Jumlah:</label>
+                  <input type="number" v-model="subComponent.quantity" :id="'sub-component-quantity-' + index + '-' + subIndex" min="1">
+                </div>
+
+                <button type="button" @click="addSubComponent(index)">+ Tambah Sub-Komponen</button><br><br>
+              </div>
+              <button type="button" @click="addComponent">+ Tambah Komponen Baru</button><br><br>
+
+              <button type="submit">Submit Item</button>
+            </form>
+          </div>
+        </div>
+
+        <div v-if="activeTab === 'ItemList'" class="table-container">
+          <!-- Original Table for 'Tipe Barang', Selecting will display all the items with it's item type on it -->
+          <div v-if="!selectedType">
+            <h2>Pilih Tipe Barang</h2>
+            <table class="table">
+              <tr>
+                <th>Tipe Barang</th>
+              </tr>
+              <tr @click="selectType('Barang Jual')">
+                <td>Barang Jual</td>
+              </tr>
+              <tr @click="selectType('Spare Part')">
+                <td>Spare Part</td>
+              </tr>
+              <tr @click="selectType('Barang Sewa')">
+                <td>Barang Sewa</td>
+              </tr>
+            </table>
+          </div>
+        
+          <!-- Table for 'Barang Jual' -->
+          <div v-if="selectedType === 'Barang Jual' && !selectedItemName">
+            <button @click="goBack" class="back-button">Back</button>
+            <h2>Barang Jual</h2>
+            <table class="table">
+              <tr>
+                  <th>Nama Barang</th>
+                  <th>Jumlah</th>
+              </tr>
+              {% raw %}
+              <tr v-for="item in filteredItems" :key="item.nama_barang" @click="showItemDetails(item.nama_barang)">
+                <td>{{ item.nama_barang }}</td>
+                <td>{{ item.jumlah }}</td>
+              </tr> 
+              {% endraw %}
+            </table>
+          </div>
+        
+          <!-- Table for 'Spare Part' -->
+          <div v-if="selectedType === 'Spare Part' && !selectedItemName">
+            <button @click="goBack" class="back-button">Back</button>
+            <h2>Spare Part</h2>
+            <table class="table">
+              <tr>
+                  <th>Nama Barang</th>
+                  <th>Jumlah</th>
+              </tr>
+              {% raw %}
+              <tr v-for="item in filteredItems" :key="item.nama_barang" @click="showItemDetails(item.nama_barang)">
+                <td>{{ item.nama_barang }}</td>
+                <td>{{ item.jumlah }}</td>
+              </tr> 
+              {% endraw %}
+          </table>
+          </div>
+        
+          <!-- Table for 'Barang Sewa' -->
+          <div v-if="selectedType === 'Barang Sewa' && !selectedItemName">
+            <button @click="goBack" class="back-button">Back</button>
+            <h2>Barang Sewa</h2>
+            <table class="table">
+              <tr>
+                  <th>Nama Barang</th>
+                  <th>Jumlah</th>
+              </tr>
+              {% raw %}
+              <tr v-for="item in filteredItems" :key="item.nama_barang" @click="showItemDetails(item.nama_barang)">
+                <td>{{ item.nama_barang }}</td>
+                <td>{{ item.jumlah }}</td>
+              </tr> 
+              {% endraw %}
+          </table>
+          </div>
+
+          <!-- Detailed Items Table for Selected Item Name -->
+          <div v-if="selectedItemName">
+            {% raw %}
+            <button @click="clearSelectedItemName" class="back-button">Back to {{ selectedType }} List</button>
+            <h1 class="pt-5 pb-2">Item List for {{ selectedItemName }}</h1>
+            {% endraw %}
+            <div class="table-container">
+              <table class="table">
+                <tr>
+                  <th>Nama Barang</th>
+                  <th>Tanggal Masuk</th>
+                  <th>Tanggal Keluar</th>
+                  <th>Nomor Seri</th>
+                  <th>Nama Pembeli/Pemasok</th>
+                  <th>Tipe Barang</th>
+                  <th>Edit/Delete</th>
+                </tr>
+                {% raw %}
+                <tr v-for="item in itemsWithSelectedName" :key="item.id" @click="showItemComponents(item)" :class="{'partial-row': item.partial}">
+                  <td>{{ item.nama_barang }}</td>
+                  <td>{{ item.tanggal_masuk }}</td>
+                  <td>{{ item.tanggal_keluar }}</td>
+                  <td>{{ item.nomor_seri }}</td>
+                  <td>{{ item.nama_pembeli_pemasok }}</td>
+                  <td>{{ item.tipe_barang }}</td>
+                  <td>
+                    <button @click.stop="showEditModal(item.id, item.nama_barang, item.tanggal_masuk, item.tanggal_keluar, item.nomor_seri, item.nama_pembeli_pemasok, item.tipe_barang)">Edit</button>
+                    <button style="background-color: rgb(212, 0, 0); color: white;" @click.stop="showDeleteModal(item.id)">Delete</button>
+                  </td>
+                </tr>
+                {% endraw %}
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Edit Modal -->
+        <div v-cloak v-if="showEdit" class="modal">
+          <div class="modal-content">
+            <h2>Edit Item</h2>
+            <form @submit.prevent="submitEdit" class="items-form">
+              <label for="nama_barang">Nama Barang:</label>
+              <input type="text" v-model="editItemData.nama_barang" id="nama_barang" required><br>
+        
+              <label for="tanggal_masuk">Tanggal Masuk:</label>
+              <input type="date" v-model="editItemData.tanggal_masuk" id="tanggal_masuk"><br>
+        
+              <label for="tanggal_keluar">Tanggal Keluar:</label>
+              <input type="date" v-model="editItemData.tanggal_keluar" id="tanggal_keluar"><br>
+        
+              <label for="nomor_seri">Nomor Seri:</label>
+              <input type="text" v-model="editItemData.nomor_seri" id="nomor_seri" required><br>
+        
+              <label for="nama_pembeli_pemasok">Nama Pembeli/Pemasok:</label>
+              <input type="text" v-model="editItemData.nama_pembeli_pemasok" id="nama_pembeli_pemasok" required><br>
+        
+              <div class="checkbox-container">
+                <label>Tipe Barang:</label><br>
+                <label>
+                  <input type="checkbox" id="barang_jual" value="barang_jual" v-model="editItemData.tipe_barang"> Barang Jual
+                </label><br>
+                <label>
+                  <input type="checkbox" id="spare_part" value="spare_part" v-model="editItemData.tipe_barang"> Spare Part
+                </label><br>
+                <label>
+                  <input type="checkbox" id="barang_sewa" value="barang_sewa" v-model="editItemData.tipe_barang"> Barang Sewa
+                </label><br>
+              </div>
+        
+              <button type="submit">Confirm Edit</button>
+              <button @click="closeEditModal">Cancel</button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Delete Confirmation Modal -->
+        <div v-cloak v-if="showDelete" class="modal">
+          <div class="modal-content">
+            <h2>Are you sure you want to delete this item?</h2>
+            <button @click="confirmDelete" style="background-color: rgb(212, 0, 0); color: white; margin-right: 10px;">Yes, Delete</button>
+            <button @click="closeDeleteModal">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Show Components Modal -->
+        <div v-cloak v-if="showComponentsModal" class="modal">
+          <div class="modal-content">
+            {% raw %}
+            <h2>Components for {{ selectedItemName }}</h2>
+            <div v-for="component in components" :key="component.id" class="component">
+              <p><strong>{{ component.component_name }}:</strong> {{ component.quantity }}</p>
+              <ul>
+                <li v-for="sub in component.sub_components" :key="sub.id">
+                  <strong>{{ sub.component_name }}:</strong> {{ sub.quantity }}
+                </li>
+              </ul>
+            </div>
+            {% endraw %}
+            <button @click="closeComponentsModal">Close</button>
+          </div>
+        </div>
+
+      </div>
+      
+      <!-- Tab Jual -->
+      <div v-if="currentView === 'Menu Jual'">
+        <div class="horizontal-tabs">
+          <button :class="{ active: activeTab === 'InputJualItem' }" @click="setTab('InputJualItem')">Input Barang Jual</button>
+          <button :class="{ active: activeTab === 'JualItemList' }" @click="setTab('JualItemList')">List Barang Jual</button>
+        </div>
+
+        <div v-if="activeTab === 'InputJualItem'">
+          <h1 class="pt-5 pb-2">Input Barang Jual</h1>
+        
+          <div class="items-form-container">
+            <form @submit.prevent="submitOutJualItem" class="items-form">
+              
+              <label for="search_items">Search Barang:</label>
+              <input type="text" id="search_items" v-model="searchTerm" @input="fetchAutocompleteItems" placeholder="Masukkan nama barang di sini">
+              <ul v-if="searchResults.length">
+                <li v-for="item in searchResults" :key="item.id" @click="selectAutocompleteItem(item)">
+                  {% raw %}
+                  {{ item.nama_barang }} - {{ item.nomor_seri }}
+                  {% endraw %}
+                </li>
+              </ul>
+        
+              <div class="radio-group">
+                <label>Jual seluruh set?</label>
+                <label><input type="radio" name="sell_entire_set" value="yes" v-model="sellEntireSet" required> Ya</label>
+                <label><input type="radio" name="sell_entire_set" value="no" v-model="sellEntireSet" required> Tidak</label>
+              </div>
+              
+              <label for="nama_barang">Nama Barang:</label>
+              <input type="text" v-model="item.nama_barang" id="nama_barang" name="nama_barang" readonly :readonly="sellEntireSet === 'yes'"><br>
+              
+              <label for="tanggal_keluar">Tanggal Keluar:</label>
+              <input type="date" v-model="item.tanggal_keluar" id="tanggal_keluar" name="tanggal_keluar"><br>
+              
+              <label for="nomor_seri">Nomor Seri:</label>
+              <input type="text" v-model="item.nomor_seri" id="nomor_seri" name="nomor_seri" readonly><br>
+              
+              <label for="nama_pembeli_pemasok">Nama Pembeli/Pemasok:</label>
+              <input type="text" v-model="item.nama_pembeli_pemasok" id="nama_pembeli_pemasok" name="nama_pembeli_pemasok" readonly><br>
+        
+              <div class="checkbox-container">
+                <label>Tipe Barang:</label><br>
+                <label><input type="checkbox" id="barang_jual" value="barang_jual" v-model="item.tipe_barang" disabled> Barang Jual</label><br>
+                <label><input type="checkbox" id="spare_part" value="spare_part" v-model="item.tipe_barang" disabled> Spare Part</label><br>
+                <label><input type="checkbox" id="barang_sewa" value="barang_sewa" v-model="item.tipe_barang" disabled> Barang Sewa</label><br>
+              </div>
+        
+              <h3>Komponen</h3>
+              <div v-for="(component, index) in item.components" :key="index">
+                <label :for="'component-name-' + index">Nama Komponen:</label>
+                <input type="text" v-model="component.name" :id="'component-name-' + index" readonly>
+                <label :for="'component-quantity-' + index">Jumlah:</label>
+                <input type="number" v-model="component.quantity" :id="'component-quantity-' + index" min="0" required :readonly="sellEntireSet === 'yes'"><br>
+                
+                <div v-for="(subComponent, subIndex) in component.sub_components" :key="'sub-' + index + '-' + subIndex">
+                  <label :for="'sub-component-name-' + index + '-' + subIndex">Sub-Komponen:</label>
+                  <input type="text" v-model="subComponent.name" :id="'sub-component-name-' + index + '-' + subIndex" readonly>
+                  <label :for="'sub-component-quantity-' + index + '-' + subIndex">Jumlah:</label>
+                  <input type="number" v-model="subComponent.quantity" :id="'sub-component-quantity-' + index + '-' + subIndex" min="0" :readonly="sellEntireSet === 'yes'">
+                </div>
+              </div>        
+        
+              <button type="submit">Submit Item</button>
+            </form>
+          </div>
+        </div>
+
+        <div v-if="activeTab === 'JualItemList'" class="table-container">
+          <!-- Original Table for 'Tipe Barang', Selecting will display all the items with it's item type on it -->
+          <div v-if="!selectedType">
+            <h2>Pilih Tipe Barang</h2>
+            <table class="table">
+              <tr>
+                <th>Tipe Barang</th>
+              </tr>
+              <tr @click="selectType('Barang Jual')">
+                <td>Barang Jual</td>
+              </tr>
+              <tr @click="selectType('Spare Part')">
+                <td>Spare Part</td>
+              </tr>
+              <tr @click="selectType('Barang Sewa')">
+                <td>Barang Sewa</td>
+              </tr>
+            </table>
+          </div>
+        
+          <!-- Table for 'Barang Jual' -->
+          <div v-if="selectedType === 'Barang Jual' && !selectedItemName">
+            <button @click="goBack" class="back-button">Back</button>
+            <h2>Barang Jual</h2>
+            <table class="table">
+              <tr>
+                  <th>Nama Barang</th>
+                  <th>Jumlah</th>
+              </tr>
+              {% raw %}
+              <tr v-for="item in filteredItemsJual" :key="item.nama_barang" @click="showItemDetails(item.nama_barang)">
+                <td>{{ item.nama_barang }}</td>
+                <td>{{ item.jumlah }}</td>
+              </tr> 
+              {% endraw %}
+          </table>
+          </div>
+        
+          <!-- Table for 'Spare Part' -->
+          <div v-if="selectedType === 'Spare Part' && !selectedItemName">
+            <button @click="goBack" class="back-button">Back</button>
+            <h2>Spare Part</h2>
+            <table class="table">
+              <tr>
+                  <th>Nama Barang</th>
+                  <th>Jumlah</th>
+              </tr>
+              {% raw %}
+              <tr v-for="item in filteredItemsJual" :key="item.nama_barang" @click="showItemDetails(item.nama_barang)">
+                <td>{{ item.nama_barang }}</td>
+                <td>{{ item.jumlah }}</td>
+              </tr> 
+              {% endraw %}
+          </table>
+          </div>
+        
+          <!-- Table for 'Barang Sewa' -->
+          <div v-if="selectedType === 'Barang Sewa' && !selectedItemName">
+            <button @click="goBack" class="back-button">Back</button>
+            <h2>Barang Sewa</h2>
+            <table class="table">
+              <tr>
+                  <th>Nama Barang</th>
+                  <th>Jumlah</th>
+              </tr>
+              {% raw %}
+              <tr v-for="item in filteredItemsJual" :key="item.nama_barang" @click="showItemDetails(item.nama_barang)">
+                <td>{{ item.nama_barang }}</td>
+                <td>{{ item.jumlah }}</td>
+              </tr> 
+              {% endraw %}
+          </table>
+          </div>
+
+          <!-- Detailed Items Table for Selected Item Name -->
+          <div v-if="selectedItemName">
+            {% raw %}
+            <button @click="clearSelectedItemName" class="back-button">Back to {{ selectedType }} List</button>
+            <h1 class="pt-5 pb-2">Item List for {{ selectedItemName }}</h1>
+            {% endraw %}
+            <div class="table-container">
+              <table class="table">
+                <tr>
+                  <th>Nama Barang</th>
+                  <th>Tanggal Masuk</th>
+                  <th>Tanggal Keluar</th>
+                  <th>Nomor Seri</th>
+                  <th>Nama Pembeli/Pemasok</th>
+                  <th>Tipe Barang</th>
+                  <th>Edit/Delete</th>
+                </tr>
+                {% raw %}
+                <tr v-for="item in itemsWithSelectedNameJual" :key="item.id" @click="showItemComponents(item)">
+                  <td>{{ item.nama_barang }}</td>
+                  <td>{{ item.tanggal_masuk }}</td>
+                  <td>{{ item.tanggal_keluar }}</td>
+                  <td>{{ item.nomor_seri }}</td>
+                  <td>{{ item.nama_pembeli_pemasok }}</td>
+                  <td>{{ item.tipe_barang }}</td>
+                  <td>
+                    <button @click.stop="showEditModal(item.id, item.nama_barang, item.tanggal_masuk, item.tanggal_keluar, item.nomor_seri, item.nama_pembeli_pemasok, item.tipe_barang)">Edit</button>
+                    <button style="background-color: rgb(212, 0, 0); color: white;" @click.stop="showDeleteModal(item.id)">Delete</button>
+                  </td>
+                </tr>
+                {% endraw %}
+              </table>
+            </div>
+          </div>
+
+          <!-- Edit Modal -->
+          <div v-cloak v-if="showEdit" class="modal">
+            <div class="modal-content">
+              <h2>Edit Item</h2>
+              <form @submit.prevent="submitEdit" class="items-form">
+                <label for="nama_barang">Nama Barang:</label>
+                <input type="text" v-model="editItemData.nama_barang" id="nama_barang" required><br>
+          
+                <label for="tanggal_masuk">Tanggal Masuk:</label>
+                <input type="date" v-model="editItemData.tanggal_masuk" id="tanggal_masuk"><br>
+          
+                <label for="tanggal_keluar">Tanggal Keluar:</label>
+                <input type="date" v-model="editItemData.tanggal_keluar" id="tanggal_keluar"><br>
+          
+                <label for="nomor_seri">Nomor Seri:</label>
+                <input type="text" v-model="editItemData.nomor_seri" id="nomor_seri" required><br>
+          
+                <label for="nama_pembeli_pemasok">Nama Pembeli/Pemasok:</label>
+                <input type="text" v-model="editItemData.nama_pembeli_pemasok" id="nama_pembeli_pemasok" required><br>
+          
+                <div class="checkbox-container">
+                  <label>Tipe Barang:</label><br>
+                  <label>
+                    <input type="checkbox" id="barang_jual" value="barang_jual" v-model="editItemData.tipe_barang"> Barang Jual
+                  </label><br>
+                  <label>
+                    <input type="checkbox" id="spare_part" value="spare_part" v-model="editItemData.tipe_barang"> Spare Part
+                  </label><br>
+                  <label>
+                    <input type="checkbox" id="barang_sewa" value="barang_sewa" v-model="editItemData.tipe_barang"> Barang Sewa
+                  </label><br>
+                </div>
+          
+                <button type="submit">Confirm Edit</button>
+                <button @click="closeEditModal">Cancel</button>
+              </form>
+            </div>
+          </div>
+          
+          <!-- Delete Confirmation Modal -->
+          <div v-cloak v-if="showDelete" class="modal">
+            <div class="modal-content">
+              <h2>Are you sure you want to delete this item?</h2>
+              <button @click="confirmDelete" style="background-color: rgb(212, 0, 0); color: white; margin-right: 10px;">Yes, Delete</button>
+              <button @click="closeDeleteModal">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Show Components Modal -->
+          <div v-cloak v-if="showComponentsModal" class="modal">
+            <div class="modal-content">
+              {% raw %}
+              <h2>Components for {{ selectedItemName }}</h2>
+              <div v-for="component in components" :key="component.id" class="component">
+                <p><strong>{{ component.component_name }}:</strong> {{ component.quantity }}</p>
+                <ul>
+                  <li v-for="sub in component.sub_components" :key="sub.id">
+                    <strong>{{ sub.component_name }}:</strong> {{ sub.quantity }}
+                  </li>
+                </ul>
+              </div>
+              {% endraw %}
+              <button @click="closeComponentsModal">Close</button>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+
+      <!-- Sales manager target tab -->
+      <div v-if="currentView === 'Sewa'">
+        <div class="horizontal-tabs">
+          <button :class="{ active: activeTab === 'InputSewaItem' }" @click="setTab('InputSewaItem')">Input Barang Sewa</button>
+          <button :class="{ active: activeTab === 'SewaItemList' }" @click="setTab('SewaItemList')">List Barang Sewa</button>
+        </div>
+
+        <div v-if="activeTab === 'InputSewaItem'">
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Vue.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          currentView: 'Dashboard',   // Default view is Dashboard
+          activeTab: 'InputItem',         // Default horizontal tab in Dashboard
+          activeMenu: '',             // Controls the open submenu (Target or Service)
+          showEdit: false,
+          showDelete: false,
+          editItemData: {
+            id: '',
+            nama_barang: '',
+            tanggal_masuk: '',
+            tanggal_keluar: '',
+            nomor_seri: '',
+            nama_pembeli_pemasok: '',
+            tipe_barang: ''
+          },
+          deleteItemId: null,
+          selectedType: null, // For the three types
+          items: [],
+          uniqueItems: [],
+          items_data: [],
+          unique_items: [],
+          unique_items2: [],
+          selectedItemName: null,
+          showComponentsModal: false,   // Modal visibility flag
+          selectedItemName: '',
+          components: [],
+          searchTerm: '',
+          searchResults: [],
+          isDropdownVisible: false,
+          sellEntireSet: null,
+          selectedItemDetails: {
+            nama_barang: '',
+            nomor_seri: '',
+            components: []
+          },
+          editItemData: {
+            tipe_barang: [] // Initialize as an array
+          },
+          item: {  // Initialize the item object with its fields
+            nama_barang: '',
+            tanggal_masuk: '',
+            tanggal_keluar: '',
+            nomor_seri: '',
+            nama_pembeli_pemasok: '',
+            tipe_barang: [],  
+            jumlah: 1, 
+            components: [
+              { name: '', quantity: 1, sub_components: [] } // Start with one empty component
+            ]
+          }
+        };
+      },
+
+      computed: {
+        // Filter items for the active 'ItemList' tab with source_type 'beli'
+        filteredItems() {
+          // Filter items by 'source_type' for 'beli'
+          const itemsBySource = this.unique_items2.filter(item => item.source_type === 'beli');
+
+          if (!this.selectedType) {
+            // Return all items sorted alphabetically if no type is selected
+            return itemsBySource.sort((a, b) => a.nama_barang.localeCompare(b.nama_barang));
+          }
+
+          // Filter by `selectedType`
+          const normalizedType = this.normalizeType(this.selectedType);
+          return itemsBySource
+            .filter(item => item.tipe_barang === normalizedType)
+            .sort((a, b) => a.nama_barang.localeCompare(b.nama_barang)); // Sort alphabetically
+        },
+
+
+        // Filter items for selected item name in 'ItemList' with source_type 'beli'
+        itemsWithSelectedName() {
+          // Initial filter by source_type for 'beli'
+          const itemsBySource = this.items_list.filter(item => item.source_type === 'beli');
+
+          // Additional filter by selected item name and selectedType
+          const normalizedType = this.normalizeType(this.selectedType);
+          return itemsBySource.filter(item =>
+            item.nama_barang === this.selectedItemName &&
+            item.tipe_barang && item.tipe_barang.split(',').includes(normalizedType)
+          );
+        },
+
+        // Filter items for the 'JualItemList' tab with source_type 'jual'
+        filteredItemsJual() {
+          // Initial filter by source_type for 'jual'
+          const itemsBySource = this.unique_items2.filter(item => item.source_type === 'jual');
+
+          if (!this.selectedType) {
+            // Return all items sorted alphabetically if no type is selected
+            return itemsBySource.sort((a, b) => a.nama_barang.localeCompare(b.nama_barang));
+          }
+
+          // Additional filter by `selectedType` if defined
+          const normalizedType = this.normalizeType(this.selectedType);
+          return itemsBySource
+            .filter(item => item.tipe_barang && item.tipe_barang.split(',').includes(normalizedType))
+            .sort((a, b) => a.nama_barang.localeCompare(b.nama_barang)); // Sort alphabetically
+        },
+
+
+        // Filter items for selected item name in 'JualItemList' with source_type 'jual'
+        itemsWithSelectedNameJual() {
+          // Initial filter by source_type for 'jual'
+          const itemsBySource = this.items_list.filter(item => item.source_type === 'jual');
+
+          // Additional filter by selected item name and selectedType
+          const normalizedType = this.normalizeType(this.selectedType);
+          return itemsBySource.filter(item =>
+            item.nama_barang === this.selectedItemName &&
+            item.tipe_barang && item.tipe_barang.split(',').includes(normalizedType)
+          );
+        }
+      },
+      watch: {
+        // Watch activeTab and currentView to save changes to localStorage
+        activeTab(newTab) {
+          localStorage.setItem('activeTab', newTab);
+        },
+        currentView(newView) {
+          localStorage.setItem('currentView', newView);
+        }
+      },
+      methods: {
+        setTab(tab) {
+          this.activeTab = tab;
+          localStorage.setItem('activeTab', tab);
+        },
+        toggleSubmenu(menu) {
+          this.activeMenu = this.activeMenu === menu ? '' : menu;
+        },
+        viewJual() {
+          this.currentView = 'Menu Jual';
+          this.activeTab = 'InputJualItem';
+          localStorage.setItem('currentView', 'Menu Jual');
+          localStorage.setItem('activeTab', 'InputJualItem');
+        },
+        viewDashboard() {
+          this.currentView = 'Dashboard';
+          this.activeTab = 'InputItem';  // Reset to default tab
+          localStorage.setItem('currentView', 'Dashboard');
+          localStorage.setItem('activeTab', 'InputItem');
+        },
+        viewSewa() {
+          this.currentView = 'Sewa';
+          this.activeTab = 'InputSewaItem';  // Reset to default tab
+          localStorage.setItem('currentView', 'Sewa');
+          localStorage.setItem('activeTab', 'InputSewaItem');
+        },
+        getItems() {
+          axios.get('/api/items')
+          .then((res) => {
+            this.items_list = res.data.items_data;
+            this.unique_items2 = res.data.unique_items2;
+          })
+          .catch((err) => {
+            console.error(err);
+          })
+        },
+        showItemComponents(item) {
+          this.selectedItemName = item.nama_barang;
+          this.fetchComponents(item.id);
+          this.showComponentsModal = true;
+        },
+        fetchComponents(itemId) {
+          axios.get(`/api/components/${itemId}`)
+            .then((res) => {
+              this.components = res.data; // Store the component data
+            })
+            .catch((err) => {
+              console.error("Error fetching components:", err);
+            });
+        },
+        closeComponentsModal() {
+          this.showComponentsModal = false;
+          this.components = []; // Clear components data
+        },
+        addComponent() {
+          // Add a new empty component to the array
+          this.item.components.push({ name: '', quantity: 1, sub_components: [] });
+        },
+        addSubComponent(componentIndex) {
+          this.item.components[componentIndex].sub_components.push({ name: '', quantity: 1 });
+        },
+        inputItem() {
+          console.log(this.item);
+
+          // Prepare the payload for submission by converting proxies to plain arrays
+          const payload = {
+            nama_barang: this.item.nama_barang,
+            tanggal_masuk: this.item.tanggal_masuk,
+            nomor_seri: this.item.nomor_seri,
+            nama_pembeli_pemasok: this.item.nama_pembeli_pemasok,
+            tipe_barang: [...this.item.tipe_barang], // Convert Proxy to plain array
+            source_type: "beli",
+            components: this.item.components.map(component => ({
+              name: component.name,
+              quantity: component.quantity,
+              sub_components: component.sub_components
+                ? component.sub_components.map(sub => ({
+                    name: sub.name,
+                    quantity: sub.quantity,
+                  }))
+                : [],
+            })),
+          };
+
+          console.log("Submitting payload:", payload); // For debugging purposes
+
+          fetch('/submit-item', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload), // JSON-encode the payload
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then(data => {
+              if (data.error) {
+                console.error('Error:', data.error);
+              } else {
+                console.log('Success:', data);
+                window.location.reload();
+              }
+            })
+            .catch((error) => {
+              console.error('Error:', error);
+            });
+        },
+        inputJualItem() {
+          console.log(this.item);
+
+          // Prepare the payload for submission (no tanggal_masuk here)
+          const payload = {
+              nama_barang: this.item.nama_barang,
+              tanggal_keluar: this.item.tanggal_keluar, // Include tanggal_keluar only
+              nomor_seri: this.item.nomor_seri,
+              nama_pembeli_pemasok: this.item.nama_pembeli_pemasok,
+              tipe_barang: [...this.item.tipe_barang], // Convert Proxy to plain array
+              source_type: "jual",
+              components: this.item.components.map(component => ({
+                  name: component.name,
+                  quantity: component.quantity,
+                  sub_components: component.sub_components
+                      ? component.sub_components.map(sub => ({
+                          name: sub.name,
+                          quantity: sub.quantity,
+                      }))
+                      : [],
+              })),
+          };
+
+          console.log("Submitting payload:", payload); // For debugging purposes
+
+          fetch('/submit-jual-item', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(payload), // JSON-encode the payload
+          })
+          .then(response => {
+              if (!response.ok) {
+                  throw new Error("Network response was not ok");
+              }
+              return response.json();
+          })
+          .then(data => {
+              if (data.error) {
+                  console.error('Error:', data.error);
+              } else {
+                  console.log('Success:', data);
+                  window.location.reload();
+              }
+          })
+          .catch((error) => {
+              console.error('Error:', error);
+          });
+        },
+        showEditModal(id, nama_barang, tanggal_masuk, tanggal_keluar, nomor_seri, nama_pembeli_pemasok, tipe_barang) {
+          this.showEdit = true;
+          this.editItemData = { id, nama_barang, tanggal_masuk, tanggal_keluar, nomor_seri, nama_pembeli_pemasok };
+          this.editItemData.tipe_barang = tipe_barang ? tipe_barang.split(',') : [];
+        },
+        closeEditModal() {
+          this.showEdit = false;
+          this.editItemData = {
+            id: '',
+            nama_barang: '',
+            tanggal_masuk: '',
+            tanggal_keluar: '',
+            nomor_seri: '',
+            nama_pembeli_pemasok: '',
+            tipe_barang: '',
+            tipe_barang: item.tipe_barang ? item.tipe_barang.split(',') : []
+          };
+        },
+        submitEdit() {
+          fetch(`/edit-item/${this.editItemData.id}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(this.editItemData),
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Failed to edit item. Please try again later.');
+            }
+            return response.json();
+          })
+          .then(data => {
+            if (data.success) {
+              alert('Item successfully edited!');
+              window.location.reload();  // Reload the page to reflect the changes
+            } else {
+              alert('Failed to edit item. Please check the input data.');
+            }
+          })
+          .catch(error => {
+            console.error('Error during the edit request:', error);
+            alert('An error occurred. Please try again later.');
+          });
+        },
+        showDeleteModal(id) {
+          this.showDelete = true;
+          this.deleteItemId = id;
+        },
+        closeDeleteModal() {
+          this.showDelete = false;
+          this.deleteItemId = null;
+        },
+        confirmDelete() {
+          fetch(`/delete-item/${this.deleteItemId}`, { method: 'DELETE' })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              window.location.reload();
+            }
+          });
+        },
+        selectType(type) {
+          this.selectedType = type; // Set selectedType to show specific table using v-if
+        },
+        normalizeType(type) {
+          return type.toLowerCase().replace(/\s+/g, '_');  // Converts "Barang Jual" to "barang_jual"
+        },
+        showItemDetails(itemName) {
+          // Sets selected item name to show detailed table
+          this.selectedItemName = itemName;
+        },
+        clearSelectedItemName() {
+          // Clears selected item name to return to filtered list view
+          this.selectedItemName = null;
+        },
+        goBack() {
+          this.selectedType = null; // Reset to show original 'Tipe Barang' table
+        },
+        searchItems() {
+          fetch(`/api/search-items=${this.searchTerm}`)
+              .then(response => response.json())
+              .then(data => {
+                  this.searchResults = data.items_data;
+              });
+        },
+        fetchAutocompleteItems() {
+          if (!this.searchTerm) {
+            this.searchResults = [];
+            this.isDropdownVisible = false; // Hide dropdown if searchTerm is empty
+            return;
+          }
+
+          fetch(`/api/autocomplete-items?query=${this.searchTerm}`)
+            .then(response => response.json())
+            .then(data => {
+              this.searchResults = data;
+              this.isDropdownVisible = true; // Show dropdown when results are fetched
+            })
+            .catch(error => {
+              console.error('Error fetching autocomplete items:', error);
+              this.isDropdownVisible = false;
+            });
+        },
+        selectAutocompleteItem(selectedItem) {
+          // Populate all fields
+          this.item.nama_barang = selectedItem.nama_barang;
+          this.item.nomor_seri = selectedItem.nomor_seri;
+          this.item.nama_pembeli_pemasok = selectedItem.nama_pembeli_pemasok;
+          this.item.tipe_barang = selectedItem.tipe_barang ? selectedItem.tipe_barang.split(',') : [];
+
+          try {
+            const response = axios.get(`/api/components/${selectedItem.id}`);
+            if (response.data) {
+                this.item.components = response.data;  // Populate components and subcomponents
+            } else {
+                console.error('No components found');
+            }
+          } catch (error) {
+            console.error('Error fetching components:', error);
+          }
+
+          this.searchResults = [];
+          this.searchTerm = '';
+        },
+        fetchSelectedItemComponents(itemId) {
+          fetch(`/api/components/${itemId}`)
+              .then(response => response.json())
+              .then(data => {
+                  this.selectedItemDetails.components = data;
+              });
+        },
+        async selectAutocompleteItem(selectedItem) {
+          this.item = { ...selectedItem }; // Populate item data
+          this.item.components = []; // Initialize components
+
+          // Fetch components data for the selected item
+          await this.populateSelectedItemData(selectedItem.id);
+
+          // Clear search results and hide the dropdown
+          this.searchResults = [];
+          this.searchTerm = '';
+          this.isDropdownVisible = false;
+        },
+        async populateSelectedItemData(itemId) {
+          try {
+            const response = await fetch(`/api/components/${itemId}`);
+            if (response.ok) {
+              const componentsData = await response.json();
+
+              // Map component_name to name
+              this.item.components = componentsData.map(component => ({
+                id: component.id,
+                name: component.component_name, // Map component_name to name
+                quantity: component.quantity,
+                originalQuantity: component.originalQuantity,
+                sub_components: (component.sub_components || []).map(subComponent => ({
+                  id: subComponent.id,
+                  name: subComponent.component_name, // Map sub_component.component_name to name
+                  quantity: subComponent.quantity,
+                  originalQuantity: subComponent.originalQuantity,
+                }))
+              }));
+            } else {
+              console.error('Failed to fetch components data');
+            }
+          } catch (error) {
+            console.error('Error fetching components:', error);
+          }
+        },
+        submitOutJualItem() {
+          if (this.sellEntireSet === 'yes') {
+            // Update only source_type to "jual"
+            this.updateSourceType(this.item.id);
+          } else {
+            // Adjust component quantities and create a new "jual" item
+            console.log("Current components structure:", JSON.stringify(this.item.components, null, 2));
+            this.processPartialSell();
+          }
+        },
+        updateSourceType(itemId) {
+          fetch(`/update-source-type/${itemId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ source_type: 'jual' }),
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                alert('Item successfully updated to jual!');
+                window.location.reload();
+              } else {
+                alert('Failed to update the item.');
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('An error occurred. Please try again later.');
+            });
+        },
+        processPartialSell() {
+          // Prepare updated components data
+          const updatedComponents = this.item.components.map(component => {
+            const originalQuantity = component.originalQuantity || 0; // Default to 0 if undefined
+            const quantity = component.quantity || 0; // Default to 0 if undefined
+            const soldQuantity = originalQuantity - quantity; // Calculate sold quantity
+            console.log('Original quantity:', originalQuantity)
+            return {
+              id: component.id,
+              soldQuantity: soldQuantity >= 0 ? soldQuantity : 0, // Ensure non-negative value
+              remainingQuantity: quantity, // New remaining quantity
+            };
+          });
+
+          // Include sub-components
+          const updatedSubComponents = [];
+          this.item.components.forEach(component => {
+            if (component.sub_components) {
+              component.sub_components.forEach(subComponent => {
+                const originalQuantity = subComponent.originalQuantity || 0; // Default to 0 if undefined
+                const quantity = subComponent.quantity || 0; // Default to 0 if undefined
+                const soldQuantity = originalQuantity - quantity; // Calculate sold quantity
+                updatedSubComponents.push({
+                  id: subComponent.id,
+                  soldQuantity: soldQuantity >= 0 ? soldQuantity : 0, // Ensure non-negative value
+                  remainingQuantity: quantity, // New remaining quantity
+                });
+              });
+            }
+          });
+          console.log('Item Structure:', JSON.stringify(this.item, null, 2));
+
+          // Send data to backend
+          fetch(`/process-partial-sell`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              itemId: this.item.id,
+              components: updatedComponents,
+              subComponents: updatedSubComponents, // Include sub-components
+              tanggal_keluar: this.item.tanggal_keluar,
+            }),
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                alert('Partial sell processed successfully!');
+                window.location.reload();
+              } else {
+                alert('Failed to process the partial sell.');
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('An error occurred. Please try again later.');
+            });
+        },
+      },
+      created() {
+        this.getItems();
+        // Retrieve activeTab and currentView from localStorage if available
+        const savedTab = localStorage.getItem('activeTab');
+        const savedView = localStorage.getItem('currentView');
+        const savedType = localStorage.getItem('selectedType');
+        const savedItemName = localStorage.getItem('selectedItemName');
+        
+        if (savedTab) {
+          this.activeTab = savedTab;
+        }
+        if (savedView) {
+          this.currentView = savedView;
+        }
+      },
+    });
+  
+    app.mount('#app');
+  </script>
+  
+</body>
+</html>
