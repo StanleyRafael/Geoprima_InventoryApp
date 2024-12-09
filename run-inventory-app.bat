@@ -2,6 +2,10 @@
 REM Change to the directory where the batch file resides
 cd %~dp0
 
+REM Start the MySQL server via XAMPP
+start /B C:\xampp\mysql_start.bat
+timeout /t 5 >nul  :: Wait for MySQL to initialize
+
 REM Activate the virtual environment
 call .\venv\Scripts\activate
 
