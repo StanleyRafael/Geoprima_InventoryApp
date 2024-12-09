@@ -973,6 +973,8 @@
         setTab(tab) {
           this.activeTab = tab;
           localStorage.setItem('activeTab', tab);
+          this.selectType('none');
+          this.selectedItemName = '';
         },
         toggleSubmenu(menu) {
           this.activeMenu = this.activeMenu === menu ? '' : menu;
@@ -982,12 +984,16 @@
           this.activeTab = 'InputJualItem';
           localStorage.setItem('currentView', 'Menu Jual');
           localStorage.setItem('activeTab', 'InputJualItem');
+          this.selectType('none');
+          this.selectedItemName = '';
         },
         viewDashboard() {
           this.currentView = 'Dashboard';
           this.activeTab = 'InputItem';  // Reset to default tab
           localStorage.setItem('currentView', 'Dashboard');
           localStorage.setItem('activeTab', 'InputItem');
+          this.selectType('none');
+          this.selectedItemName = '';
         },
         viewSewa() {
           this.currentView = 'Sewa';
@@ -1193,7 +1199,11 @@
           });
         },
         selectType(type) {
-          this.selectedType = type; // Set selectedType to show specific table using v-if
+          if (type === 'none') {
+            this.selectedType = ''; // Clear selection
+          } else {
+            this.selectedType = type;
+          }
         },
         normalizeType(type) {
           return type.toLowerCase().replace(/\s+/g, '_');  // Converts "Barang Jual" to "barang_jual"
