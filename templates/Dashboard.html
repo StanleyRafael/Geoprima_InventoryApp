@@ -495,9 +495,8 @@
                 <tr>
                   <th>Nama Barang</th>
                   <th>Tanggal Masuk</th>
-                  <th>Tanggal Keluar</th>
                   <th>Nomor Seri</th>
-                  <th>Nama Pembeli/Pemasok</th>
+                  <th>Nama Pemasok</th>
                   <th>Tipe Barang</th>
                   <th>Edit/Delete</th>
                 </tr>
@@ -505,7 +504,6 @@
                 <tr v-for="item in itemsWithSelectedName" :key="item.id" @click="showItemComponents(item)" :class="{'partial-row': item.partial}">
                   <td>{{ item.nama_barang }}</td>
                   <td>{{ item.tanggal_masuk }}</td>
-                  <td>{{ item.tanggal_keluar }}</td>
                   <td>{{ item.nomor_seri }}</td>
                   <td>{{ item.nama_pembeli_pemasok }}</td>
                   <td>{{ item.tipe_barang }}</td>
@@ -572,7 +570,10 @@
         <div v-cloak v-if="showComponentsModal" class="modal">
           <div class="modal-content">
             {% raw %}
-            <h2>Components for {{ selectedItemName }}</h2>
+            <h2>
+              Components for {{ selectedItemName }} 
+              <span v-if="selectedItemNomorSeri"> ({{ selectedItemNomorSeri }})</span>
+            </h2>            
             <div v-for="component in components" :key="component.id" class="component">
               <p><strong>{{ component.component_name }}:</strong> {{ component.quantity }}</p>
               <ul>
@@ -626,9 +627,12 @@
               <label for="nomor_seri">Nomor Seri:</label>
               <input type="text" v-model="item.nomor_seri" id="nomor_seri" name="nomor_seri" readonly><br>
               
-              <label for="nama_pembeli_pemasok">Nama Pembeli/Pemasok:</label>
+              <label for="nama_pembeli_pemasok">Nama Pemasok:</label>
               <input type="text" v-model="item.nama_pembeli_pemasok" id="nama_pembeli_pemasok" name="nama_pembeli_pemasok" readonly><br>
         
+              <label for="nama_pembeli">Nama Pembeli:</label>
+              <input type="text" v-model="item.nama_pembeli" id="nama_pembeli" name="nama_pembeli"><br>
+
               <div class="checkbox-container">
                 <label>Tipe Barang:</label><br>
                 <label><input type="checkbox" id="barang_jual" value="barang_jual" v-model="item.tipe_barang" disabled> Barang Jual</label><br>
@@ -743,7 +747,8 @@
                   <th>Tanggal Masuk</th>
                   <th>Tanggal Keluar</th>
                   <th>Nomor Seri</th>
-                  <th>Nama Pembeli/Pemasok</th>
+                  <th>Nama Pemasok</th>
+                  <th>Nama Pembeli</th>
                   <th>Tipe Barang</th>
                   <th>Edit/Delete</th>
                 </tr>
@@ -754,6 +759,7 @@
                   <td>{{ item.tanggal_keluar }}</td>
                   <td>{{ item.nomor_seri }}</td>
                   <td>{{ item.nama_pembeli_pemasok }}</td>
+                  <td>{{ item.nama_pembeli }}</td>
                   <td>{{ item.tipe_barang }}</td>
                   <td>
                     <button @click.stop="showEditModal(item.id, item.nama_barang, item.tanggal_masuk, item.tanggal_keluar, item.nomor_seri, item.nama_pembeli_pemasok, item.tipe_barang)">Edit</button>
@@ -817,8 +823,10 @@
           <div v-cloak v-if="showComponentsModal" class="modal">
             <div class="modal-content">
               {% raw %}
-              <h2>Components for {{ selectedItemName }}</h2>
-              <div v-for="component in components" :key="component.id" class="component">
+              <h2>
+                Components for {{ selectedItemName }} 
+                <span v-if="selectedItemNomorSeri"> ({{ selectedItemNomorSeri }})</span>
+              </h2>              <div v-for="component in components" :key="component.id" class="component">
                 <p><strong>{{ component.component_name }}:</strong> {{ component.quantity }}</p>
                 <ul>
                   <li v-for="sub in component.sub_components" :key="sub.id">
@@ -847,7 +855,7 @@
         return {
           currentView: 'Dashboard',   // Default view is Dashboard
           activeTab: 'InputItem',         // Default horizontal tab in Dashboard
-          activeMenu: '',             // Controls the open submenu (Target or Service)
+          activeMenu: '',
           showEdit: false,
           showDelete: false,
           editItemData: {
@@ -867,6 +875,7 @@
           unique_items: [],
           unique_items2: [],
           selectedItemName: null,
+          selectedItemNomorSeri:'',
           showComponentsModal: false,   // Modal visibility flag
           selectedItemName: '',
           components: [],
@@ -888,6 +897,7 @@
             tanggal_keluar: '',
             nomor_seri: '',
             nama_pembeli_pemasok: '',
+            nama_pembeli: '',
             tipe_barang: [],  
             jumlah: 1, 
             components: [
@@ -1015,6 +1025,7 @@
           this.selectedItemName = item.nama_barang;
           this.fetchComponents(item.id);
           this.showComponentsModal = true;
+          this.selectedItemNomorSeri = item.nomor_seri;
         },
         fetchComponents(itemId) {
           axios.get(`/api/components/${itemId}`)
@@ -1326,7 +1337,11 @@
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ source_type: 'jual' }),
+            body: JSON.stringify({
+              source_type: 'jual',
+              nama_pembeli: this.item.nama_pembeli,
+              tanggal_keluar: this.item.tanggal_keluar,
+            }),
           })
             .then(response => response.json())
             .then(data => {
@@ -1383,8 +1398,9 @@
             body: JSON.stringify({
               itemId: this.item.id,
               components: updatedComponents,
-              subComponents: updatedSubComponents, // Include sub-components
+              subComponents: updatedSubComponents,
               tanggal_keluar: this.item.tanggal_keluar,
+              nama_pembeli: this.item.nama_pembeli,
             }),
           })
             .then(response => response.json())

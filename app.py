@@ -23,6 +23,7 @@ class ItemList(db.Model):
             "tanggal_keluar": self.tanggal_keluar.strftime('%Y-%m-%d') if self.tanggal_keluar else '',
             "nomor_seri": self.nomor_seri,
             "nama_pembeli_pemasok": self.nama_pembeli_pemasok,
+            "nama_pembeli": self.nama_pembeli,
             "tipe_barang": self.tipe_barang,
             "source_type": self.source_type,
             "partial" : self.partial
@@ -34,6 +35,7 @@ class ItemList(db.Model):
     tanggal_keluar = db.Column(db.Date, nullable=True)
     nomor_seri = db.Column(db.String(50), nullable=False)
     nama_pembeli_pemasok = db.Column(db.String(100), nullable=False)
+    nama_pembeli = db.Column(db.String(100), nullable=False)
     source_type = db.Column(db.String(20), nullable=False)
     tipe_barang = db.Column(db.String(255), nullable=True)  # Comma-separated type
     partial = db.Column(db.Boolean, default=False)
@@ -279,10 +281,23 @@ def autocomplete_items():
 
 @app.route('/update-source-type/<int:id>', methods=['POST'])
 def update_source_type(id):
-    item = ItemList.query.get_or_404(id)
-    item.source_type = 'jual'
-    db.session.commit()
-    return jsonify({'success': True})
+    try:
+        data = request.json  # Capture request payload
+        item = ItemList.query.get_or_404(id)
+
+        # Update source type and buyer's name
+        item.source_type = data.get('source_type', item.source_type)
+        if 'nama_pembeli' in data:  # Only update if the field is filled
+            item.nama_pembeli = data['nama_pembeli']
+        if 'tanggal_keluar' in data:  # Only update if the field is filled
+            item.tanggal_keluar = data['tanggal_keluar']
+
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error updating source type: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/process-partial-sell', methods=['POST'])
 def process_partial_sell():
@@ -308,6 +323,7 @@ def process_partial_sell():
             tanggal_keluar=data['tanggal_keluar'],
             nomor_seri=original_item.nomor_seri,
             nama_pembeli_pemasok=original_item.nama_pembeli_pemasok,
+            nama_pembeli=data['nama_pembeli'],
             source_type='jual',
             tipe_barang=original_item.tipe_barang
         )
