@@ -298,6 +298,11 @@ def update_source_type(id):
         print(f"Error updating source type: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+def update_subcomponents_to_zero(component_id):
+    subcomponents = Component.query.filter_by(parent_id=component_id).all()
+    for subcomponent in subcomponents:
+        subcomponent.quantity = 0
+        update_subcomponents_to_zero(subcomponent.id)  # Recursively set subcomponent quantities
 
 @app.route('/process-partial-sell', methods=['POST'])
 def process_partial_sell():
@@ -310,6 +315,8 @@ def process_partial_sell():
         for component_data in data['components']:
             component = Component.query.get_or_404(component_data['id'])
             component.quantity = component_data['remainingQuantity']  # Update remaining quantity
+            if component.quantity == 0:  # If quantity is zero, update subcomponents
+                update_subcomponents_to_zero(component.id)
 
         # Update original item's sub-components
         for sub_component_data in data.get('subComponents', []):
@@ -340,18 +347,6 @@ def process_partial_sell():
                     item_id=sold_item.id,
                 )
                 db.session.add(sold_component)
-                
-
-        # Add sold sub-components to the new item
-        for sub_component_data in data.get('subComponents', []):
-            if sub_component_data['soldQuantity'] > 0:  # Only add sold sub-components
-                sold_sub_component = Component(
-                    component_name=Component.query.get_or_404(sub_component_data['id']).component_name,
-                    quantity=sub_component_data['soldQuantity'],
-                    parent_id=sold_component.id,
-                    item_id=sold_item.id,
-                )
-                db.session.add(sold_sub_component)
 
         original_item.partial = True
 

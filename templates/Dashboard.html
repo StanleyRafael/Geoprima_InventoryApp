@@ -1358,12 +1358,27 @@
             });
         },
         processPartialSell() {
+          // Helper function to set subcomponents' quantities to 0
+          const setSubComponentsToZero = (component) => {
+            if (component.sub_components) {
+              component.sub_components.forEach(subComponent => {
+                subComponent.quantity = 0;
+                setSubComponentsToZero(subComponent); // Recursively set subcomponent's subcomponents
+              });
+            }
+          };
+
           // Prepare updated components data
           const updatedComponents = this.item.components.map(component => {
             const originalQuantity = component.originalQuantity || 0; // Default to 0 if undefined
             const quantity = component.quantity || 0; // Default to 0 if undefined
             const soldQuantity = originalQuantity - quantity; // Calculate sold quantity
-            console.log('Original quantity:', originalQuantity)
+
+            // If component is deleted, also update subcomponents
+            if (quantity === 0) {
+              setSubComponentsToZero(component);
+            }
+
             return {
               id: component.id,
               soldQuantity: soldQuantity >= 0 ? soldQuantity : 0, // Ensure non-negative value
@@ -1371,7 +1386,7 @@
             };
           });
 
-          // Include sub-components
+          // Include updated subcomponents
           const updatedSubComponents = [];
           this.item.components.forEach(component => {
             if (component.sub_components) {
@@ -1387,6 +1402,7 @@
               });
             }
           });
+
           console.log('Item Structure:', JSON.stringify(this.item, null, 2));
 
           // Send data to backend
